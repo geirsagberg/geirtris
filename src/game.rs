@@ -44,8 +44,10 @@ fn setup_game(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
             ..default()
         },
         TextureDimension::D2,
-        &[128, 128, 128, 128, 128, 128, 128, 128],
-        TextureFormat::Rgba16Float,
+        &[
+            255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255, 255,
+        ],
+        TextureFormat::Rgba32Float,
     );
 
     let grid_image_handle = images.add(grid_image);
@@ -59,6 +61,7 @@ fn setup_game(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
                 )),
                 ..default()
             },
+
             texture: grid_image_handle,
             transform: Transform::from_xyz(0., 0., 0.),
             ..default()

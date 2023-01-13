@@ -1,3 +1,3 @@
 #!/usr/bin/env bash
 
-cargo watch -w src -x run --features dev
+cargo watch -w src -w assets -x run --features dev
