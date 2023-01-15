@@ -1,6 +1,7 @@
 mod game;
 mod macros;
 mod menu;
+mod mutable_image;
 
 use bevy::prelude::*;
 use game::GamePlugin;
@@ -17,7 +18,7 @@ enum GameState {
 
 impl Plugin for MainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(GameState::MainMenu)
+        app.add_loopless_state(GameState::Running)
             .add_startup_system(setup_camera)
             .add_plugin(MenuPlugin)
             .add_plugin(GamePlugin);
