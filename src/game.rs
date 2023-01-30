@@ -7,10 +7,34 @@ use bevy::{
 };
 use hex_color::HexColor;
 use iyes_loopless::prelude::*;
+use leafwing_input_manager::{prelude::InputMap, InputManagerBundle};
 
-use crate::{despawn_with, GameState};
+use crate::{despawn_with, Action, GameState};
 
 pub struct GamePlugin;
+
+#[derive(Component)]
+struct Player;
+
+fn spawn_player(mut commands: Commands) {
+    commands
+        .spawn(InputManagerBundle::<Action> {
+            input_map: InputMap::new([
+                (KeyCode::A, Action::Left),
+                (KeyCode::Left, Action::Left),
+                (KeyCode::D, Action::Right),
+                (KeyCode::Right, Action::Right),
+                (KeyCode::W, Action::HardDrop),
+                (KeyCode::Up, Action::HardDrop),
+                (KeyCode::S, Action::SoftDrop),
+                (KeyCode::Down, Action::SoftDrop),
+                (KeyCode::Escape, Action::Pause),
+                (KeyCode::P, Action::Pause),
+            ]),
+            ..default()
+        })
+        .insert(Player);
+}
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
@@ -44,10 +68,10 @@ struct Size {
 
 fn setup_game(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     let grid_size = Size {
-        width: 32,
-        height: 64,
+        width: 10,
+        height: 40,
     };
-    let block_size = 8.;
+    let block_size = 16.;
 
     let grid_image = Image::new_fill(
         Extent3d {
@@ -73,7 +97,7 @@ fn setup_game(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
             },
 
             texture: grid_image_handle,
-            transform: Transform::from_xyz(0., 0., 0.),
+            transform: Transform::from_xyz(0., 160., 0.),
             ..default()
         },
         GameGrid::from_size(grid_size),
@@ -107,13 +131,13 @@ struct Block {
 }
 
 impl Block {
-    fn random(_seed: i32, grid_width: usize) -> Block {
+    fn random(_seed: i32, grid_width: usize, grid_height: usize) -> Block {
         Block {
             width: 4,
             height: 1,
             shape: vec![true; 4],
             x: grid_width / 2,
-            y: 0,
+            y: grid_height / 2 - 1,
             color: HexColor::RED,
         }
     }
@@ -146,7 +170,11 @@ fn spawn_blocks(
 ) {
     if query.is_empty() {
         let grid = grid_query.get_single().unwrap();
-        commands.spawn((Block::random(42, grid.width), Running, Controlled));
+        commands.spawn((
+            Block::random(42, grid.width, grid.height),
+            Running,
+            Controlled,
+        ));
     }
 }
 

@@ -8,8 +8,8 @@ fn main() {
                 .set(WindowPlugin {
                     window: WindowDescriptor {
                         monitor: MonitorSelection::Index(1),
-                        width: 800.,
-                        height: 512.,
+                        width: 160.,
+                        height: 320.,
                         ..default()
                     },
                     ..default()

@@ -5,7 +5,8 @@ mod mutable_image;
 
 use bevy::prelude::*;
 use game::GamePlugin;
-use iyes_loopless::prelude::AppLooplessStateExt;
+use iyes_loopless::prelude::*;
+use leafwing_input_manager::prelude::*;
 use menu::MenuPlugin;
 
 pub struct MainPlugin;
@@ -20,9 +21,19 @@ impl Plugin for MainPlugin {
     fn build(&self, app: &mut App) {
         app.add_loopless_state(GameState::Running)
             .add_startup_system(setup_camera)
+            .add_plugin(InputManagerPlugin::<Action>::default())
             .add_plugin(MenuPlugin)
             .add_plugin(GamePlugin);
     }
+}
+
+#[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug)]
+enum Action {
+    Left,
+    Right,
+    SoftDrop,
+    HardDrop,
+    Pause,
 }
 
 fn setup_camera(mut commands: Commands) {
