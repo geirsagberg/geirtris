@@ -1,5 +1,4 @@
 use bevy::{app::AppExit, prelude::*};
-use iyes_loopless::prelude::*;
 
 use crate::{despawn_with, rem, GameState};
 
@@ -7,15 +6,15 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(GameState::MainMenu, build_menu)
-            .add_exit_system(GameState::MainMenu, despawn_with::<MainMenu>)
-            .add_system_set(
-                ConditionSet::new()
-                    .run_in_state(GameState::MainMenu)
-                    .with_system(button_visuals)
-                    .with_system(start_game.run_if(on_click::<StartButton>))
-                    .with_system(exit_game.run_if(on_click::<ExitButton>))
-                    .into(),
+        app.add_system(build_menu.in_schedule(OnEnter(GameState::MainMenu)))
+            .add_system(despawn_with::<MainMenu>.in_schedule(OnExit(GameState::MainMenu)))
+            .add_systems(
+                (
+                    button_visuals,
+                    start_game.run_if(on_click::<StartButton>),
+                    exit_game.run_if(on_click::<ExitButton>),
+                )
+                    .in_set(OnUpdate(GameState::MainMenu)),
             );
     }
 }
@@ -43,8 +42,8 @@ fn on_click<B: Component>(
     false
 }
 
-fn start_game(mut commands: Commands) {
-    commands.insert_resource(NextState(GameState::Running));
+fn start_game(mut next_state: ResMut<NextState<GameState>>) {
+    next_state.set(GameState::Running);
 }
 fn exit_game(mut event_writer: EventWriter<AppExit>) {
     event_writer.send(AppExit);

@@ -6,12 +6,10 @@ fn main() {
         .add_plugins(
             DefaultPlugins
                 .set(WindowPlugin {
-                    window: WindowDescriptor {
-                        monitor: MonitorSelection::Index(1),
-                        width: 160.,
-                        height: 320.,
+                    primary_window: Some(Window {
+                        resolution: (160., 320.).into(),
                         ..default()
-                    },
+                    }),
                     ..default()
                 })
                 .set(ImagePlugin::default_nearest()),

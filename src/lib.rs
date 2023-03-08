@@ -1,33 +1,31 @@
 mod game;
 mod macros;
 mod menu;
-mod mutable_image;
 
 use bevy::prelude::*;
 use game::GamePlugin;
-use iyes_loopless::prelude::*;
-use leafwing_input_manager::prelude::*;
 use menu::MenuPlugin;
 
 pub struct MainPlugin;
 
-#[derive(Debug, Clone, Copy, PartialEq, Eq, Hash)]
+#[derive(States, Debug, Clone, Copy, PartialEq, Eq, Hash, Default)]
 enum GameState {
+    #[default]
     MainMenu,
     Running,
+    GameOver,
 }
 
 impl Plugin for MainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_loopless_state(GameState::Running)
-            .add_startup_system(setup_camera)
-            .add_plugin(InputManagerPlugin::<Action>::default())
+        app.add_startup_system(setup_camera)
+            .add_state::<GameState>()
             .add_plugin(MenuPlugin)
             .add_plugin(GamePlugin);
     }
 }
 
-#[derive(Actionlike, PartialEq, Eq, Clone, Copy, Hash, Debug)]
+#[derive(PartialEq, Eq, Clone, Copy, Hash, Debug)]
 enum Action {
     Left,
     Right,

@@ -6,10 +6,8 @@ use bevy::{
     },
 };
 use hex_color::HexColor;
-use iyes_loopless::prelude::*;
-use leafwing_input_manager::{prelude::InputMap, InputManagerBundle};
 
-use crate::{despawn_with, Action, GameState};
+use crate::{despawn_with, GameState};
 
 pub struct GamePlugin;
 
@@ -17,44 +15,18 @@ pub struct GamePlugin;
 struct Player;
 
 fn spawn_player(mut commands: Commands) {
-    commands
-        .spawn(InputManagerBundle::<Action> {
-            input_map: InputMap::new([
-                (KeyCode::A, Action::Left),
-                (KeyCode::Left, Action::Left),
-                (KeyCode::D, Action::Right),
-                (KeyCode::Right, Action::Right),
-                (KeyCode::W, Action::HardDrop),
-                (KeyCode::Up, Action::HardDrop),
-                (KeyCode::S, Action::SoftDrop),
-                (KeyCode::Down, Action::SoftDrop),
-                (KeyCode::Escape, Action::Pause),
-                (KeyCode::P, Action::Pause),
-            ]),
-            ..default()
-        })
-        .insert(Player);
+    commands.spawn(Player);
 }
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_enter_system(GameState::Running, setup_game)
-            .add_exit_system(GameState::Running, despawn_with::<Running>)
-            .add_system_set(
-                ConditionSet::new()
-                    .run_in_state(GameState::Running)
-                    .with_system(progress_timer)
-                    .with_system(move_block)
-                    .with_system(spawn_blocks)
-                    .into(),
+        app.add_system(setup_game.in_schedule(OnEnter(GameState::Running)))
+            .add_system(despawn_with::<Running>.in_schedule(OnExit(GameState::Running)))
+            .add_systems(
+                (progress_timer, move_block, spawn_block, check_for_game_over)
+                    .in_set(OnUpdate(GameState::Running)),
             )
-            .add_system_set_to_stage(
-                CoreStage::PostUpdate,
-                ConditionSet::new()
-                    .run_in_state(GameState::Running)
-                    .with_system(render_blocks)
-                    .into(),
-            );
+            .add_system(render_blocks.in_base_set(CoreSet::PostUpdate));
     }
 }
 
@@ -64,6 +36,14 @@ struct Running;
 struct Size {
     width: usize,
     height: usize,
+}
+
+fn check_for_game_over(query: Query<&GameGrid>, mut next_state: ResMut<NextState<GameState>>) {
+    let grid = query.single();
+    let top_row = &grid.data[grid.width * (grid.height / 2 - 1)..grid.width * (grid.height / 2)];
+    if top_row.iter().any(|color| color != &HexColor::BLACK) {
+        next_state.set(GameState::MainMenu);
+    }
 }
 
 fn setup_game(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
@@ -87,6 +67,7 @@ fn setup_game(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
     let grid_image_handle = images.add(grid_image);
 
     commands.spawn((
+        Running,
         SpriteBundle {
             sprite: Sprite {
                 custom_size: Some(Vec2::new(
@@ -101,12 +82,10 @@ fn setup_game(mut commands: Commands, mut images: ResMut<Assets<Image>>) {
             ..default()
         },
         GameGrid::from_size(grid_size),
-        Running,
+        GameTime {
+            timer: Timer::from_seconds(0.1, TimerMode::Repeating),
+        },
     ));
-
-    commands.spawn(GameTime {
-        timer: Timer::from_seconds(0.1, TimerMode::Repeating),
-    });
 }
 
 fn progress_timer(mut query: Query<&mut GameTime>, time: Res<Time>) {
@@ -163,19 +142,25 @@ impl GameGrid {
     }
 }
 
-fn spawn_blocks(
+fn spawn_block(
     mut commands: Commands,
     query: Query<&Controlled, With<Block>>,
     grid_query: Query<&GameGrid>,
 ) {
     if query.is_empty() {
-        let grid = grid_query.get_single().unwrap();
+        let grid = grid_query.single();
         commands.spawn((
             Block::random(42, grid.width, grid.height),
             Running,
             Controlled,
         ));
     }
+}
+
+fn is_game_over(query: Query<&GameGrid>) -> bool {
+    let grid = query.single();
+    let top_row = &grid.data[grid.width * (grid.height / 2 - 1)..grid.width * (grid.height / 2)];
+    top_row.iter().any(|color| color != &HexColor::BLACK)
 }
 
 fn collides_with_grid(block: &Block, game_grid: &GameGrid) -> bool {

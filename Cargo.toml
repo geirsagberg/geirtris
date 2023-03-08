@@ -13,13 +13,9 @@ edition = "2021"
 opt-level = 3
 
 [features]
-dev = [
-  "bevy/dynamic",
-]
+dev = ["bevy/dynamic_linking"]
 
 [dependencies]
-bevy = "0.9"
-iyes_loopless = "0.9"
+bevy = "0.10"
 image = "0.24"
 hex_color = "2"
-leafwing-input-manager = "0.7"
