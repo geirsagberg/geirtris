@@ -20,13 +20,14 @@ fn spawn_player(mut commands: Commands) {
 
 impl Plugin for GamePlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(setup_game.in_schedule(OnEnter(GameState::Running)))
-            .add_system(despawn_with::<Running>.in_schedule(OnExit(GameState::Running)))
+        app.add_systems(OnEnter(GameState::Running), setup_game)
+            .add_systems(OnExit(GameState::Running), despawn_with::<Running>)
             .add_systems(
+                Update,
                 (progress_timer, move_block, spawn_block, check_for_game_over)
-                    .in_set(OnUpdate(GameState::Running)),
+                    .run_if(in_state(GameState::Running)),
             )
-            .add_system(render_blocks.in_base_set(CoreSet::PostUpdate));
+            .add_systems(PostUpdate, render_blocks);
     }
 }
 

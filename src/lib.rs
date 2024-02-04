@@ -18,10 +18,9 @@ enum GameState {
 
 impl Plugin for MainPlugin {
     fn build(&self, app: &mut App) {
-        app.add_startup_system(setup_camera)
+        app.add_systems(Startup, setup_camera)
             .add_state::<GameState>()
-            .add_plugin(MenuPlugin)
-            .add_plugin(GamePlugin);
+            .add_plugins((MenuPlugin, GamePlugin));
     }
 }
 

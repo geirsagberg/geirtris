@@ -6,15 +6,16 @@ pub struct MenuPlugin;
 
 impl Plugin for MenuPlugin {
     fn build(&self, app: &mut App) {
-        app.add_system(build_menu.in_schedule(OnEnter(GameState::MainMenu)))
-            .add_system(despawn_with::<MainMenu>.in_schedule(OnExit(GameState::MainMenu)))
+        app.add_systems(OnEnter(GameState::MainMenu), build_menu)
+            .add_systems(OnExit(GameState::MainMenu), despawn_with::<MainMenu>)
             .add_systems(
+                Update,
                 (
                     button_visuals,
                     start_game.run_if(on_click::<StartButton>),
                     exit_game.run_if(on_click::<ExitButton>),
                 )
-                    .in_set(OnUpdate(GameState::MainMenu)),
+                    .run_if(in_state(GameState::MainMenu)),
             );
     }
 }
@@ -35,7 +36,7 @@ fn on_click<B: Component>(
     query: Query<&Interaction, (Changed<Interaction>, With<Button>, With<B>)>,
 ) -> bool {
     for interaction in &query {
-        if *interaction == Interaction::Clicked {
+        if *interaction == Interaction::Pressed {
             return true;
         }
     }
@@ -54,7 +55,7 @@ fn button_visuals(
 ) {
     for (interaction, mut color) in &mut query {
         match *interaction {
-            Interaction::Clicked => {
+            Interaction::Pressed => {
                 *color = PRESSED_BUTTON.into();
             }
             Interaction::Hovered => {
@@ -78,7 +79,8 @@ trait BuildButtons: BuildChildren {
             parent
                 .spawn(ButtonBundle {
                     style: Style {
-                        size: Size::new(rem!(8), rem!(4)),
+                        width: rem!(8),
+                        height: rem!(4),
                         margin: UiRect::all(rem!(0.5)),
                         justify_content: JustifyContent::Center,
                         align_items: AlignItems::Center,
